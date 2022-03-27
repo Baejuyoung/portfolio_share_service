@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Col, Row, Form, Button } from "react-bootstrap";
+import { useAlert } from "react-alert";
 
 import * as Api from "../../api";
 
 function RegisterForm() {
   const navigate = useNavigate();
 
-  //useState로 email 상태를 생성함.
+  // useAlert로 alert 함수 이용함.
+  const alert = useAlert()
+
+  // useState로 email 상태를 생성함.
   const [email, setEmail] = useState("");
   //useState로 password 상태를 생성함.
   const [password, setPassword] = useState("");
@@ -40,19 +44,30 @@ function RegisterForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
+    const userFormData = new FormData();
+    if (!image) {userFormData.append("image", "")}
+    else {Object.values(image).forEach((file) => userFormData.append("image", file));}
+    
+    userFormData.append("email", email);
+    userFormData.append("password", password)
+    userFormData.append("name", name);
+    
     try {
       // "user/register" 엔드포인트로 post요청함.
-      await Api.post("user/register", {
-        email,
-        password,
-        name,
-      });
-
+      await Api.imgPost("user/register", userFormData);
+      alert.success('회원가입이 완료되었습니다.')
+      alert.success('이메일로 전송된 로그인 인증을 마무리해주세요.')
       // 로그인 페이지로 이동함.
       navigate("/login");
     } catch (err) {
-      console.log("회원가입에 실패하였습니다.", err);
+      if (err.response.data==='"이 이메일은 현재 사용중입니다. 다른 이메일을 입력해 주세요."') {
+        alert.error('이 이메일은 현재 사용중입니다.')
+        alert.error('다른 이메일을 입력해 주세요.')
+      } else {
+        alert.error('회원가입에 실패하였습니다. \n 다시 한 번 시도해주세요.')
+      }
+      
     }
   };
 
