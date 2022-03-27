@@ -7,6 +7,9 @@ import { uploadImage } from "../middlewares/uploadImage";
 import { login_required } from "../middlewares/login_required";
 import { userAuthService } from "../services/userService";
 
+import generatePassword from "../middlewares/generatePassword";
+import sendMail from "../middlewares/sendMail";
+
 const userAuthRouter = Router();
 
 userAuthRouter.post("/user/register", uploadImage.single("image"), async function (req, res, next) {
@@ -40,52 +43,9 @@ userAuthRouter.post("/user/register", uploadImage.single("image"), async functio
     } catch (error) {
         next(error);
     }
-
-    // req (request) 에서 데이터 가져오기
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
-
-    // 위 데이터를 유저 db에 추가하기
-    const newUser = await userAuthService.addUser({
-      name,
-      email,
-      password,
-    });
-
-    if (newUser.errorMessage) {
-      throw new Error(newUser.errorMessage);
-    }
-
-    res.status(201).json(newUser);
-  } catch (error) {
-    next(error);
-  }
 });
 
 userAuthRouter.post("/user/login", async function (req, res, next) {
-  try {
-    // req (request) 에서 데이터 가져오기
-    const email = req.body.email;
-    const password = req.body.password;
-
-    // 위 데이터를 이용하여 유저 db에서 유저 찾기
-    const user = await userAuthService.getUser({ email, password });
-
-    if (user.errorMessage) {
-      throw new Error(user.errorMessage);
-    }
-
-    res.status(200).send(user);
-  } catch (error) {
-    next(error);
-  }
-});
-
-userAuthRouter.get(
-  "/userlist",
-  login_required,
-  async function (req, res, next) {
     try {
         // req (request) 에서 데이터 가져오기
         const email = req.body.email;
@@ -118,15 +78,11 @@ userAuthRouter.get("/user/vaildation/:id", async (req, res) => {
 
         return res.redirect(`${process.env.SERVER_URL}/login?validation=true`);
     } catch (error) {
-      next(error);
+        next(error);
     }
-  }
-);
+});
 
-userAuthRouter.get(
-  "/user/current",
-  login_required,
-  async function (req, res, next) {
+userAuthRouter.get("/userlist", login_required, async function (req, res, next) {
     try {
         const id = req.currentUserId;
         /* Pagination */
@@ -144,15 +100,11 @@ userAuthRouter.get(
 
         return res.status(200).json({ users, page, endPage });
     } catch (error) {
-      next(error);
+        next(error);
     }
-  }
-);
+});
 
-userAuthRouter.put(
-  "/users/:id",
-  login_required,
-  async function (req, res, next) {
+userAuthRouter.get("/user/current", login_required, async function (req, res, next) {
     try {
         // jwt토큰에서 추출된 사용자 id를 가지고 db에서 사용자 정보를 찾음.
         const user_id = req.currentUserId;
@@ -162,16 +114,9 @@ userAuthRouter.put(
             throw new Error(currentUserInfo.errorMessage);
         }
 
-      // 해당 사용자 아이디로 사용자 정보를 db에서 찾아 업데이트함. 업데이트 요소가 없을 시 생략함
-      const updatedUser = await userAuthService.setUser({ user_id, toUpdate });
-
-      if (updatedUser.errorMessage) {
-        throw new Error(updatedUser.errorMessage);
-      }
-
-      res.status(200).json(updatedUser);
+        return res.status(200).send(currentUserInfo);
     } catch (error) {
-      next(error);
+        next(error);
     }
 });
 
@@ -201,7 +146,7 @@ userAuthRouter.put("/user/current", login_required, uploadImage.single("image"),
 
         return res.status(200).json(updatedUser);
     } catch (error) {
-      next(error);
+        next(error);
     }
 });
 

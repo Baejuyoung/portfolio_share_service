@@ -1,6 +1,11 @@
 import cors from "cors";
 import express from "express";
 import { userAuthRouter } from "./routers/userRouter";
+import { awardAuthRouter } from "./routers/awardRouter";
+import { educationRouter } from "./routers/educationRouter";
+import { certificateRouter } from "./routers/certificateRouter";
+import { projectRouter } from "./routers/projectRouter";
+import { blogRouter } from "./routers/blogRouter";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 const app = express();
@@ -9,7 +14,7 @@ const cookieParser = require('cookie-parser');
 
 // CORS 에러 방지, credential 인증 추가
 app.use(cors({
-    origin: `${process.env.SERVER_URL}`,
+    origin: `${process.env.SERVER_URL}:${process.env.REACT_PORT}`,
     credentials: true
 }));
 
